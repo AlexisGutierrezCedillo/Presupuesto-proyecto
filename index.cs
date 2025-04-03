@@ -3,36 +3,33 @@ using System.Collections.Generic;
 
 class Program
 {
-    // Función recursiva que acumula todas las combinaciones de 'count' números que sumen 'target'
-    static void EncontrarCombinaciones(List<double> numeros, int count, double target, int inicio, List<double> combinacionActual, List<List<double>> resultados)
+    // Función recursiva para acumular combinaciones que tengan una suma en el intervalo [limiteInferior, limiteSuperior]
+    static void EncontrarCombinacionesEnRango(List<double> numeros, int count, double limiteInferior, double limiteSuperior, int inicio, List<double> combinacionActual, double sumaActual, List<List<double>> resultados)
     {
-        // Caso base: cuando no se requieren más números
         if (count == 0)
         {
-            if (Math.Abs(target) < 1e-6) // Tolerancia para comparar con 0
+            // Al haber seleccionado todos los números, se verifica si la suma acumulada se encuentra en el rango deseado.
+            if (sumaActual >= limiteInferior && sumaActual <= limiteSuperior)
             {
-                // Se agrega una copia de la combinación actual a los resultados
                 resultados.Add(new List<double>(combinacionActual));
             }
             return;
         }
-
-        // Se recorre la lista de números a partir del índice 'inicio'
+        
+        // Se recorren los números a partir del índice 'inicio'
         for (int i = inicio; i < numeros.Count; i++)
         {
             combinacionActual.Add(numeros[i]);
-            // Se llama recursivamente reduciendo la cantidad a buscar y actualizando el target
-            EncontrarCombinaciones(numeros, count - 1, target - numeros[i], i + 1, combinacionActual, resultados);
-            // Se elimina el último número para explorar otras combinaciones
+            EncontrarCombinacionesEnRango(numeros, count - 1, limiteInferior, limiteSuperior, i + 1, combinacionActual, sumaActual + numeros[i], resultados);
             combinacionActual.RemoveAt(combinacionActual.Count - 1);
         }
     }
-
+    
     static void Main(string[] args)
     {
         List<double> numeros = new List<double>();
         Console.WriteLine("Ingrese números (enteros o decimales). Escriba 'listo' para finalizar:");
-
+        
         // Entrada de números
         while (true)
         {
@@ -40,7 +37,7 @@ class Program
             if (entrada.ToLower() == "listo")
                 break;
             
-            double num; // Declaración fuera del if
+            double num;
             if (double.TryParse(entrada, out num))
             {
                 numeros.Add(num);
@@ -50,7 +47,7 @@ class Program
                 Console.WriteLine("Entrada inválida, intente nuevamente.");
             }
         }
-
+        
         // Solicita el objetivo de la suma
         Console.WriteLine("Suma objetivo:");
         double objetivo;
@@ -67,25 +64,50 @@ class Program
             Console.WriteLine("Entrada inválida, ingrese un número entero para la cantidad de números a sumar:");
         }
         
-        // Lista para acumular todas las combinaciones válidas
-        List<List<double>> resultados = new List<List<double>>();
-        EncontrarCombinaciones(numeros, cantidad, objetivo, 0, new List<double>(), resultados);
+        // Listas para acumular las combinaciones en cada rango
+        List<List<double>> resultadosInferiores = new List<List<double>>();
+        List<List<double>> resultadosSuperiores = new List<List<double>>();
         
-        // Mostrar resultados
-        if (resultados.Count > 0)
+        // Buscar combinaciones con suma en el rango [objetivo - 1, objetivo]
+        EncontrarCombinacionesEnRango(numeros, cantidad, objetivo - 1, objetivo, 0, new List<double>(), 0, resultadosInferiores);
+        // Buscar combinaciones con suma en el rango [objetivo, objetivo + 1]
+        EncontrarCombinacionesEnRango(numeros, cantidad, objetivo, objetivo + 1, 0, new List<double>(), 0, resultadosSuperiores);
+        
+        // Mostrar resultados para el primer rango
+        Console.WriteLine("\nCombinaciones con suma entre {0} y {1}:", objetivo - 1, objetivo);
+        if (resultadosInferiores.Count > 0)
         {
-            Console.WriteLine("Se encontraron las siguientes combinaciones:");
-            foreach (var combinacion in resultados)
+            foreach (var combinacion in resultadosInferiores)
             {
-                Console.WriteLine(string.Join(" + ", combinacion) + " = " + objetivo);
+                double suma = 0;
+                foreach (double n in combinacion)
+                    suma += n;
+                Console.WriteLine(string.Join(" + ", combinacion) + " = " + suma);
             }
         }
         else
         {
-            Console.WriteLine("No se encontró ninguna combinación de {0} números que sumen {1}.", cantidad, objetivo);
+            Console.WriteLine("No se encontró ninguna combinación.");
         }
         
-        Console.WriteLine("Presione cualquier tecla para salir...");
+        // Mostrar resultados para el segundo rango
+        Console.WriteLine("\nCombinaciones con suma entre {0} y {1}:", objetivo, objetivo + 1);
+        if (resultadosSuperiores.Count > 0)
+        {
+            foreach (var combinacion in resultadosSuperiores)
+            {
+                double suma = 0;
+                foreach (double n in combinacion)
+                    suma += n;
+                Console.WriteLine(string.Join(" + ", combinacion) + " = " + suma);
+            }
+        }
+        else
+        {
+            Console.WriteLine("No se encontró ninguna combinación.");
+        }
+        
+        Console.WriteLine("\nPresione cualquier tecla para salir...");
         Console.ReadKey();
     }
 }
